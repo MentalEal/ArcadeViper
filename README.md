@@ -1,18 +1,23 @@
-# Snake Desktop
+# Arcade Viper
 
-## Entwicklung
+Ein Snake-Spiel als Windows-Desktop-App (Electron).
 
-```powershell
-cd C:\Users\duft4\Desktop\Snake-App
-"C:\Program Files\nodejs\npm.cmd" install
-"C:\Program Files\nodejs\npm.cmd" start
+## Starten
+
+Voraussetzung: Node.js und Git (`winget install OpenJS.NodeJS.LTS` und `winget install Git.Git`).
+
+In CMD:
+
+```
+git clone https://github.com/MentalEal/ArcadeViper.git
+cd ArcadeViper
+npm install
+npm start
 ```
 
-## Installer bauen
+## Update holen
 
-```powershell
-cd C:\Users\duft4\Desktop\Snake-App
-"C:\Program Files\nodejs\npm.cmd" make
 ```
-
-Das Spiel lädt die drei Tracks aus `renderer/music/`.
+git pull
+npm start
+```
