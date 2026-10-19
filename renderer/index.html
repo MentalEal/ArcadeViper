@@ -1116,6 +1116,12 @@
       function render(currentState) {
         for (const cell of cells) cell.className = "cell";
 
+        const difficultyLocked = currentState.started && !currentState.gameOver;
+        difficultySelect.disabled = difficultyLocked;
+        difficultySelect.title = difficultyLocked
+          ? "Die Schwierigkeit kann nach dem Spielende fuer den naechsten Versuch geaendert werden."
+          : "Schwierigkeit fuer den naechsten Versuch waehlen.";
+
         if (currentState.food) {
           cells[cellIndex(currentState.food.x, currentState.food.y)].classList.add("food");
         }
@@ -1466,7 +1472,14 @@
       });
 
       difficultySelect.addEventListener("change", function () {
-        if (!DIFFICULTY_TICKS[this.value]) return;
+        if (state.started && !state.gameOver) {
+          this.value = currentDifficulty;
+          return;
+        }
+        if (!DIFFICULTY_TICKS[this.value]) {
+          this.value = currentDifficulty;
+          return;
+        }
         currentDifficulty = this.value;
         scoreboardDifficulty = this.value;
         startLoop();
