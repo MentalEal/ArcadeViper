@@ -1,6 +1,6 @@
 # Arcade Viper
 
-Ein Snake-Spiel als Windows-Desktop-App (Electron).
+
 
 ## Starten
 
