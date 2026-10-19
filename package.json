@@ -7,8 +7,8 @@
   "author": "Codex",
   "license": "UNLICENSED",
   "scripts": {
-    "start": "electron-forge start --config=forge.config.js",
-    "make": "electron-forge make --config=forge.config.js"
+    "start": "electron-forge start",
+    "make": "electron-forge make"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.8.1",
