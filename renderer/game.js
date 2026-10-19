@@ -71,6 +71,7 @@ const GAME_CONFIG = {
   const menuWallet = $("menuWallet");
   const difficultyHint = $("difficultyHint");
   const introOverlay = $("introOverlay");
+  $("resetSaveBtn").remove();
   const scoreboardPanel = $("scoreboardPanel");
   const scoreboardList = $("scoreboardList");
   const nameEntryModal = $("nameEntryModal");
@@ -829,23 +830,6 @@ const GAME_CONFIG = {
   $("cancelNameEntryBtn").addEventListener("click", () => closeNameEntry(false));
   saveNameEntryBtn.addEventListener("click", () => { if (!saveNameEntryBtn.disabled) closeNameEntry(true); });
   $("modalBackdrop").addEventListener("click", () => { if (nameEntryModal.hidden) closeScoreboardPanel(); });
-  $("resetSaveBtn").addEventListener("click", () => {
-    if (!window.confirm("Münzen, Level, Maps und Rekorde wirklich zurücksetzen?")) return;
-    localStorage.removeItem(GAME_CONFIG.storageKey);
-    localStorage.removeItem(GAME_CONFIG.legacyScoreboardKey);
-    saveData = defaultSave();
-    currentMapId = "neon";
-    currentDifficulty = "easy";
-    scoreboardDifficulty = "easy";
-    state = createInitialState(Math.random);
-    startLoop();
-    saveGameData();
-    updateTheme();
-    refreshDifficultyOptions();
-    renderShop();
-    render(state);
-    renderScoreboard();
-  });
   window.addEventListener("beforeunload", () => {
     if (timerId !== null) clearInterval(timerId);
     stopAllMusic();
