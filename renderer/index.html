@@ -15,6 +15,10 @@
       --snake-head: #d7ff69;
       --food: #ff6a5f;
       --food-core: #fff1d0;
+      --coin-edge: #102338;
+      --coin-fill: #ffd52d;
+      --coin-glow: rgba(255, 190, 0, 0.9);
+      --coin-rim: #fff6b5;
       --obstacle: #46596a;
       --grid-surface: rgba(7, 16, 24, 0.95);
       --cell-surface: #0d1620;
@@ -204,6 +208,10 @@
       box-shadow: inset 0 0 0 2px rgba(7, 16, 24, 0.28);
     }
 
+    .cell.enemy-glitch { clip-path: polygon(50% 0, 64% 25%, 100% 12%, 78% 50%, 100% 88%, 62% 75%, 50% 100%, 36% 74%, 0 88%, 22% 50%, 0 12%, 38% 25%); }
+    .cell.enemy-scorpion { clip-path: polygon(50% 0, 66% 20%, 100% 10%, 82% 42%, 96% 78%, 64% 68%, 50% 100%, 36% 68%, 4% 78%, 18% 42%, 0 10%, 34% 20%); }
+    .cell.enemy-slider { clip-path: polygon(50% 0, 100% 82%, 50% 68%, 0 82%); }
+
     .cell.snake-head::before {
       content: "";
       position: absolute;
@@ -228,19 +236,48 @@
     }
 
     .cell.coin::after {
-      content: "●";
+      content: "";
       position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      color: #ffd84a;
-      font-size: clamp(5px, 1.2vw, 12px);
-      text-shadow: 0 0 6px #ffb000;
+      width: 84%;
+      height: 84%;
+      left: 8%;
+      top: 8%;
+      border: 2px solid var(--coin-edge);
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 28%, #fff9a5 0 9%, var(--coin-fill) 42%, #d58a00 100%);
+      box-shadow: 0 0 0 1px var(--coin-rim), 0 0 10px 3px var(--coin-glow);
+      animation: coin-pulse 1.2s ease-in-out infinite alternate;
+    }
+
+    body.colorblind-mode .cell.coin::after {
+      border-color: #101820;
+      background: radial-gradient(circle at 32% 28%, #ffffff 0 9%, #fff36a 42%, #e08a00 100%);
+      box-shadow: 0 0 0 1px #ffffff, 0 0 8px 2px rgba(255, 235, 0, 1);
     }
 
     .cell.enemy {
-      background: #f34b68;
-      box-shadow: inset 0 0 0 2px #ffc5ce, 0 0 7px rgba(243, 75, 104, 0.7);
+      background: #e83f55;
+      box-shadow: inset 0 0 0 1px rgba(255, 230, 230, 0.8), 0 0 9px rgba(243, 75, 104, var(--enemy-glow, 0.4));
+      animation: enemy-pulse var(--enemy-pulse-duration, 1800ms) ease-in-out infinite alternate;
+    }
+
+    @keyframes coin-pulse {
+      from { filter: brightness(0.94); }
+      to { filter: brightness(1.22); }
+    }
+
+    @keyframes enemy-pulse {
+      from { filter: brightness(0.85); }
+      to { filter: brightness(1.35); }
+    }
+
+    @keyframes enemy-colorblind-pulse {
+      from { filter: drop-shadow(0 0 2px #fff5bd) brightness(0.9); }
+      to { filter: drop-shadow(0 0 7px #ffdb3b) brightness(1.4); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cell.coin::after, .cell.enemy { animation: none; }
     }
 
     body.map-desert {
@@ -367,6 +404,59 @@
     body.colorblind-mode .cell.food::after {
       inset: 20%;
       border-radius: 4px;
+    }
+
+    body.colorblind-mode .cell.snake:not(.snake-head) {
+      background-color: #167fc1;
+      background-image: repeating-linear-gradient(135deg, transparent 0 3px, rgba(4, 27, 48, 0.75) 3px 4px);
+      box-shadow: inset 0 0 0 1px #d8f5ff;
+    }
+
+    body.colorblind-mode .cell.snake-head {
+      background-color: #fff06a;
+      background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(9, 42, 65, 0.38) 4px 5px);
+      outline: 1px solid #08263a;
+    }
+
+    body.colorblind-mode .cell.food {
+      background: #ff8b22;
+      box-shadow: inset 0 0 0 2px #092b43;
+    }
+
+    body.colorblind-mode .cell.food::after {
+      background: #fff;
+      box-shadow: 0 0 0 1px #092b43;
+    }
+
+    body.colorblind-mode .cell.obstacle {
+      background-color: #f3a43b;
+      background-image: repeating-linear-gradient(135deg, #092b43 0 2px, #f3a43b 2px 6px);
+      box-shadow: inset 0 0 0 1px #fff2c4;
+    }
+
+    body.colorblind-mode .cell.enemy {
+      background: #fff7bf;
+      clip-path: polygon(50% 0, 63% 20%, 100% 8%, 80% 45%, 100% 92%, 61% 76%, 50% 100%, 37% 76%, 0 92%, 20% 45%, 0 8%, 39% 20%);
+      box-shadow: inset 0 0 0 1px #08263a, 0 0 10px 3px rgba(255, 229, 89, var(--enemy-glow, 0.45));
+      animation: enemy-colorblind-pulse var(--enemy-pulse-duration, 1800ms) ease-in-out infinite alternate;
+    }
+
+    body.colorblind-mode.map-neon,
+    body.colorblind-mode.map-desert,
+    body.colorblind-mode.map-ice {
+      --snake: #167fc1;
+      --snake-head: #fff06a;
+      --food: #ff8b22;
+      --food-core: #ffffff;
+      --grid: #173d58;
+      --accent: #9ce6ff;
+      --obstacle: #f3a43b;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cell.coin::after,
+      .cell.enemy,
+      body.colorblind-mode .cell.enemy { animation: none; }
     }
 
     .status {
@@ -806,7 +896,7 @@
           <h2 class="modal-title">Top Runs</h2>
           <button id="closeScoreboardBtn" class="icon-button" type="button" aria-label="Bestenliste schliessen">✕</button>
         </div>
-        <p class="modal-copy">Jeder Eintrag nutzt bis zu 5 Zeichen. Gewertet wird zuerst Score, dann Ueberlebenszeit.</p>
+        <p class="modal-copy">Jeder Eintrag nutzt bis zu 5 Zeichen. Gewertet wird nach erreichtem Level, bei Gleichstand nach kuerzerer Zeit.</p>
         <p id="boardContext" class="modal-copy"></p>
         <div class="scoreboard-tabs">
           <button class="scoreboard-tab" data-board-difficulty="easy" type="button">Leicht</button>
@@ -845,7 +935,6 @@
           </div>
           <h2 class="modal-title">Maps & Shop · Konto: <span id="menuWallet">0</span> Münzen</h2>
           <div id="shopList" class="shop-list"></div>
-          <button id="resetSaveBtn" type="button">Spielstand zum Testen zurücksetzen</button>
           <div class="intro-actions">
             <button id="startBtn" class="primary" type="button">Spiel starten</button>
             <button id="introScoreboardBtn" type="button">Bestenliste</button>
