@@ -15,6 +15,9 @@
       --snake-head: #d7ff69;
       --food: #ff6a5f;
       --food-core: #fff1d0;
+      --obstacle: #46596a;
+      --grid-surface: rgba(7, 16, 24, 0.95);
+      --cell-surface: #0d1620;
       --text: #edf5fb;
       --muted: #91a7b8;
       --accent: #76d8ff;
@@ -179,7 +182,7 @@
       display: grid;
       grid-template-columns: repeat(var(--grid-size), 1fr);
       grid-template-rows: repeat(var(--grid-size), 1fr);
-      background: rgba(7, 16, 24, 0.95);
+      background: var(--grid-surface);
       border: 1px solid #23394b;
       border-radius: 16px;
       overflow: hidden;
@@ -189,7 +192,7 @@
     .cell {
       position: relative;
       border: 1px solid var(--grid);
-      background: #0d1620;
+      background: var(--cell-surface);
     }
 
     .cell.snake {
@@ -218,6 +221,98 @@
       height: 0;
       border-style: solid;
     }
+
+    .cell.obstacle {
+      background: var(--obstacle);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+    }
+
+    .cell.coin::after {
+      content: "●";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #ffd84a;
+      font-size: clamp(5px, 1.2vw, 12px);
+      text-shadow: 0 0 6px #ffb000;
+    }
+
+    .cell.enemy {
+      background: #f34b68;
+      box-shadow: inset 0 0 0 2px #ffc5ce, 0 0 7px rgba(243, 75, 104, 0.7);
+    }
+
+    body.map-desert {
+      --bg: #25180e;
+      --bg-glow: #4a2d16;
+      --panel: rgba(45, 30, 18, 0.94);
+      --panel-edge: #71502e;
+      --grid: #62492d;
+      --accent: #f5c66b;
+      --obstacle: #2d7540;
+      --grid-surface: #a97d4f;
+      --cell-surface: #d6b27d;
+      --snake: #39834e;
+      --snake-head: #a6d45c;
+      --food: #bd4938;
+    }
+
+    body.map-ice {
+      --bg: #0b1c2a;
+      --bg-glow: #183c54;
+      --panel: rgba(13, 32, 47, 0.94);
+      --panel-edge: #315d76;
+      --grid: #365a70;
+      --accent: #a7e8ff;
+      --obstacle: #a9dced;
+      --grid-surface: #17374b;
+      --cell-surface: #20475d;
+      --snake: #76cfed;
+      --snake-head: #d6f8ff;
+      --food: #ff835f;
+    }
+
+    body.map-neon {
+      --obstacle: #46596a;
+    }
+
+    .game-hud {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .game-hud strong { color: var(--text); }
+
+    .intro-card { max-height: 88vh; overflow: auto; }
+
+    .shop-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .shop-item {
+      border: 1px solid var(--panel-edge);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(7, 16, 24, 0.4);
+      font-size: 0.86rem;
+    }
+
+    .shop-item p { margin: 6px 0; color: var(--muted); }
+    .shop-item button { width: 100%; padding: 8px; }
+    .menu-difficulty { display: grid; gap: 6px; margin-top: 12px; }
+    .menu-difficulty-note { color: var(--muted); font-size: 0.84rem; }
+    .new-record { color: #ffd84a !important; font-weight: 800; }
+    button:disabled, select:disabled { cursor: not-allowed; opacity: 0.55; }
 
     .cell.snake-head.head-right::after {
       top: 50%;
@@ -302,7 +397,7 @@
 
     .actions {
       display: grid;
-      grid-template-columns: repeat(3, minmax(94px, 1fr));
+      grid-template-columns: repeat(4, minmax(80px, 1fr));
       gap: 8px;
       justify-content: center;
     }
@@ -642,7 +737,7 @@
       }
 
       .actions {
-        grid-template-columns: repeat(3, minmax(80px, 1fr));
+        grid-template-columns: repeat(4, minmax(64px, 1fr));
       }
     }
   </style>
@@ -668,6 +763,15 @@
           <button id="scoreboardBtn" class="icon-button" type="button" aria-label="Bestenliste">🏆</button>
           <button id="settingsBtn" class="icon-button" type="button" aria-label="Einstellungen">⚙</button>
         </div>
+      </div>
+
+      <div class="game-hud" aria-live="polite">
+        <span>Level <strong id="levelHud">1</strong></span>
+        <span>Ziel <strong id="progressHud">0/10</strong></span>
+        <span>Run-Münzen <strong id="runCoinsHud">0</strong></span>
+        <span>Konto <strong id="walletHud">0</strong></span>
+        <span>Map <strong id="mapHud">Neon-Grid</strong></span>
+        <span>Rekord <strong id="recordHud">0</strong></span>
       </div>
 
       <div id="settingsPanel" class="settings-panel" hidden>
@@ -703,6 +807,7 @@
           <button id="closeScoreboardBtn" class="icon-button" type="button" aria-label="Bestenliste schliessen">✕</button>
         </div>
         <p class="modal-copy">Jeder Eintrag nutzt bis zu 5 Zeichen. Gewertet wird zuerst Score, dann Ueberlebenszeit.</p>
+        <p id="boardContext" class="modal-copy"></p>
         <div class="scoreboard-tabs">
           <button class="scoreboard-tab" data-board-difficulty="easy" type="button">Leicht</button>
           <button class="scoreboard-tab" data-board-difficulty="medium" type="button">Mittel</button>
@@ -734,6 +839,13 @@
             <div class="metric">Shuffle Playlists</div>
             <div class="metric">Top 10 Pro Tempo</div>
           </div>
+          <div class="menu-difficulty">
+            <label for="difficultySelect">Schwierigkeit für diese Map</label>
+            <div id="difficultyHint" class="menu-difficulty-note"></div>
+          </div>
+          <h2 class="modal-title">Maps & Shop · Konto: <span id="menuWallet">0</span> Münzen</h2>
+          <div id="shopList" class="shop-list"></div>
+          <button id="resetSaveBtn" type="button">Spielstand zum Testen zurücksetzen</button>
           <div class="intro-actions">
             <button id="startBtn" class="primary" type="button">Spiel starten</button>
             <button id="introScoreboardBtn" type="button">Bestenliste</button>
@@ -757,804 +869,13 @@
           <button id="pauseBtn" type="button">Pause</button>
           <button id="restartBtn" type="button">Neu</button>
           <button id="quickScoresBtn" type="button">Scores</button>
+          <button id="menuBtn" type="button">Menü</button>
         </div>
       </div>
       <div class="hint">Tasten: Pfeile / WASD, Leertaste = Pause, R = Neustart, Esc = Settings schliessen</div>
     </section>
   </div>
 
-  <script>
-    (function () {
-      "use strict";
-
-      const GRID_SIZE = 35;
-      const SCOREBOARD_KEY = "arcade-viper-scoreboard-v1";
-      const LAST_TAG_KEY = "arcade-viper-last-tag";
-      const DIFFICULTY_TICKS = {
-        easy: 120,
-        medium: 95,
-        hard: 75,
-      };
-      const DIFFICULTY_LABELS = {
-        easy: "Leicht",
-        medium: "Mittel",
-        hard: "Schwer",
-      };
-      const TRACKS = {
-        easy: [
-          { title: "Chill Gaming Relaxing Ambient Background", file: "music/easy.mp3" },
-          { title: "Pixel Dreams", file: "music/easy-pixel-dreams.mp3" },
-          { title: "Pixel Fantasia", file: "music/easy-pixel-fantasia.mp3" },
-          { title: "Pixel Paradise 2.0", file: "music/easy-pixel-paradise.mp3" },
-          { title: "Retro Arcade Game Music", file: "music/easy-retro-arcade.mp3" },
-        ],
-        medium: [
-          { title: "Chiptune Video Game Games Music", file: "music/medium.mp3" },
-          { title: "Retro Game Arcade", file: "music/medium-retro-game-arcade.mp3" },
-          { title: "8-bit Arcade Mode", file: "music/medium-arcade-mode.mp3" },
-          { title: "Play Again - Classic Arcade Game", file: "music/medium-play-again.mp3" },
-          { title: "356 | 8-Bit Chiptune Game Music", file: "music/medium-356.mp3" },
-        ],
-        hard: [
-          { title: "Fast-Paced 8bit Chiptune for Retro Gaming", file: "music/hard.mp3" },
-          { title: "The Return Of The 8-bit Era", file: "music/hard-return-8bit-era.mp3" },
-          { title: "Combat | Fast-Paced 8-Bit Chiptune", file: "music/hard-combat.mp3" },
-          { title: "Pixify", file: "music/hard-pixify.mp3" },
-        ],
-      };
-      const DIRS = {
-        up: { x: 0, y: -1 },
-        down: { x: 0, y: 1 },
-        left: { x: -1, y: 0 },
-        right: { x: 1, y: 0 },
-      };
-      const OPPOSITE = { up: "down", down: "up", left: "right", right: "left" };
-
-      function key(x, y) {
-        return x + "," + y;
-      }
-
-      function spawnFood(snake, randomFn, gridSize) {
-        const occupied = new Set(snake.map((part) => key(part.x, part.y)));
-        const free = [];
-
-        for (let y = 0; y < gridSize; y += 1) {
-          for (let x = 0; x < gridSize; x += 1) {
-            if (!occupied.has(key(x, y))) free.push({ x, y });
-          }
-        }
-
-        if (free.length === 0) return null;
-        const idx = Math.floor(randomFn() * free.length);
-        return free[Math.max(0, Math.min(idx, free.length - 1))];
-      }
-
-      function createInitialState(randomFn) {
-        const start = { x: Math.floor(GRID_SIZE / 2), y: Math.floor(GRID_SIZE / 2) };
-        const snake = [start];
-        return {
-          snake,
-          dir: "right",
-          nextDir: "right",
-          food: spawnFood(snake, randomFn, GRID_SIZE),
-          score: 0,
-          gameOver: false,
-          paused: false,
-          started: false,
-        };
-      }
-
-      function setNextDirection(state, dir) {
-        if (!DIRS[dir]) return state;
-        if (OPPOSITE[state.dir] === dir) return state;
-        return { ...state, nextDir: dir };
-      }
-
-      function step(state, randomFn) {
-        if (!state.started || state.gameOver || state.paused) return state;
-
-        const dir = state.nextDir;
-        const delta = DIRS[dir];
-        const head = state.snake[0];
-        const newHead = { x: head.x + delta.x, y: head.y + delta.y };
-
-        if (
-          newHead.x < 0 ||
-          newHead.y < 0 ||
-          newHead.x >= GRID_SIZE ||
-          newHead.y >= GRID_SIZE
-        ) {
-          return { ...state, dir, gameOver: true };
-        }
-
-        const willGrow = state.food && newHead.x === state.food.x && newHead.y === state.food.y;
-        const nextBody = [newHead, ...state.snake];
-        if (!willGrow) nextBody.pop();
-
-        const occupied = new Set(nextBody.slice(1).map((part) => key(part.x, part.y)));
-        if (occupied.has(key(newHead.x, newHead.y))) {
-          return { ...state, dir, snake: nextBody, gameOver: true };
-        }
-
-        const nextScore = willGrow ? state.score + 1 : state.score;
-        const nextFood = willGrow ? spawnFood(nextBody, randomFn, GRID_SIZE) : state.food;
-
-        return {
-          ...state,
-          snake: nextBody,
-          dir,
-          food: nextFood,
-          score: nextScore,
-          gameOver: nextFood === null,
-        };
-      }
-
-      function normalizeTag(value) {
-        return value
-          .normalize("NFKC")
-          .toUpperCase()
-          .replace(/[^\p{L}0-9]/gu, "")
-          .slice(0, 5);
-      }
-
-      function formatDuration(durationMs) {
-        const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
-      }
-
-      function formatDate(isoString) {
-        return new Date(isoString).toLocaleDateString("de-DE", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "2-digit",
-        });
-      }
-
-      function scoreSort(a, b) {
-        if (b.score !== a.score) return b.score - a.score;
-        if (b.durationMs !== a.durationMs) return b.durationMs - a.durationMs;
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      }
-
-      function createEmptyBoard() {
-        return {
-          easy: [],
-          medium: [],
-          hard: [],
-        };
-      }
-
-      function loadScoreboard() {
-        try {
-          const stored = JSON.parse(window.localStorage.getItem(SCOREBOARD_KEY) || "null");
-          return {
-            easy: Array.isArray(stored && stored.easy) ? stored.easy : [],
-            medium: Array.isArray(stored && stored.medium) ? stored.medium : [],
-            hard: Array.isArray(stored && stored.hard) ? stored.hard : [],
-          };
-        } catch (error) {
-          return createEmptyBoard();
-        }
-      }
-
-      function saveScoreboard(scoreboard) {
-        window.localStorage.setItem(SCOREBOARD_KEY, JSON.stringify(scoreboard));
-      }
-
-      function qualifiesForScoreboard(scoreboard, difficulty, entry) {
-        const list = (scoreboard[difficulty] || []).slice().sort(scoreSort);
-        if (list.length < 10) return true;
-        const worst = list[list.length - 1];
-        return entry.score > worst.score || (entry.score === worst.score && entry.durationMs >= worst.durationMs);
-      }
-
-      function insertScore(scoreboard, difficulty, entry) {
-        const next = {
-          easy: (scoreboard.easy || []).slice(),
-          medium: (scoreboard.medium || []).slice(),
-          hard: (scoreboard.hard || []).slice(),
-        };
-        next[difficulty].push(entry);
-        next[difficulty].sort(scoreSort);
-        next[difficulty] = next[difficulty].slice(0, 10);
-        return next;
-      }
-
-      const gridEl = document.getElementById("grid");
-      const scoreEl = document.getElementById("score");
-      const difficultySelect = document.getElementById("difficultySelect");
-      const statusEl = document.getElementById("status");
-      const pauseBtn = document.getElementById("pauseBtn");
-      const restartBtn = document.getElementById("restartBtn");
-      const quickScoresBtn = document.getElementById("quickScoresBtn");
-      const scoreboardBtn = document.getElementById("scoreboardBtn");
-      const settingsBtn = document.getElementById("settingsBtn");
-      const closeSettingsBtn = document.getElementById("closeSettingsBtn");
-      const introSettingsBtn = document.getElementById("introSettingsBtn");
-      const introScoreboardBtn = document.getElementById("introScoreboardBtn");
-      const settingsPanel = document.getElementById("settingsPanel");
-      const modalBackdrop = document.getElementById("modalBackdrop");
-      const scoreboardPanel = document.getElementById("scoreboardPanel");
-      const closeScoreboardBtn = document.getElementById("closeScoreboardBtn");
-      const scoreboardList = document.getElementById("scoreboardList");
-      const scoreboardTabs = Array.from(document.querySelectorAll("[data-board-difficulty]"));
-      const nameEntryModal = document.getElementById("nameEntryModal");
-      const nameEntryCopy = document.getElementById("nameEntryCopy");
-      const nameEntryInput = document.getElementById("nameEntryInput");
-      const nameEntryHint = document.getElementById("nameEntryHint");
-      const cancelNameEntryBtn = document.getElementById("cancelNameEntryBtn");
-      const saveNameEntryBtn = document.getElementById("saveNameEntryBtn");
-      const startBtn = document.getElementById("startBtn");
-      const introOverlay = document.getElementById("introOverlay");
-      const musicToggleBtn = document.getElementById("musicToggleBtn");
-      const volumeRange = document.getElementById("volumeRange");
-      const colorblindToggle = document.getElementById("colorblindToggle");
-      const trackNameEl = document.getElementById("trackName");
-      const cells = [];
-
-      gridEl.style.setProperty("--grid-size", String(GRID_SIZE));
-
-      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i += 1) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        gridEl.appendChild(cell);
-        cells.push(cell);
-      }
-
-      function cellIndex(x, y) {
-        return y * GRID_SIZE + x;
-      }
-
-      let currentDifficulty = difficultySelect.value;
-      let scoreboardDifficulty = currentDifficulty;
-      let scoreboard = loadScoreboard();
-      let runStartedAt = null;
-      let runFinishedHandled = false;
-      let resumeAfterOverlay = false;
-      let pendingScoreEntry = null;
-
-      const settings = {
-        colorblindMode: false,
-      };
-
-      const musicAudio = new Audio();
-      musicAudio.loop = false;
-      musicAudio.preload = "auto";
-      musicAudio.volume = Math.max(0, Math.min(1, Number(volumeRange.value) / 100));
-
-      let state = createInitialState(Math.random);
-      let musicEnabled = true;
-      let audioUnlocked = false;
-      let musicAvailable = true;
-      let timerId = null;
-      let currentTrack = null;
-      const failedTracks = {
-        easy: new Set(),
-        medium: new Set(),
-        hard: new Set(),
-      };
-
-      function difficultyLabel(difficulty) {
-        return DIFFICULTY_LABELS[difficulty] || difficulty;
-      }
-
-      function applyTheme() {
-        document.body.classList.toggle("colorblind-mode", settings.colorblindMode);
-      }
-
-      function updateMusicUi() {
-        const diffLabel = difficultyLabel(currentDifficulty).toUpperCase();
-        if (!musicAvailable) {
-          musicToggleBtn.textContent = "Musik fehlt";
-          trackNameEl.textContent = diffLabel + " // Keine verfuegbare Playlist";
-        } else {
-          musicToggleBtn.textContent = musicEnabled ? "Musik: An" : "Musik: Aus";
-          trackNameEl.textContent = currentTrack
-            ? diffLabel + " // " + currentTrack.title + " // Shuffle"
-            : diffLabel + " // Playlist bereit";
-        }
-      }
-
-      function updateIntroVisibility() {
-        introOverlay.hidden = state.started;
-      }
-
-      function updateBackdrop() {
-        modalBackdrop.hidden = scoreboardPanel.hidden && nameEntryModal.hidden;
-      }
-
-      function updatePanelsResumeState() {
-        if (!resumeAfterOverlay) return;
-        if (settingsPanel.hidden && scoreboardPanel.hidden && nameEntryModal.hidden && !state.gameOver) {
-          resumeAfterOverlay = false;
-          state = { ...state, paused: false };
-          render(state);
-        }
-      }
-
-      function pauseForOverlayIfNeeded() {
-        if (resumeAfterOverlay) return;
-        if (state.started && !state.paused && !state.gameOver) {
-          resumeAfterOverlay = true;
-          state = { ...state, paused: true };
-          render(state);
-        }
-      }
-
-      function renderScoreboard() {
-        scoreboardTabs.forEach(function (button) {
-          button.classList.toggle("active", button.getAttribute("data-board-difficulty") === scoreboardDifficulty);
-        });
-
-        const entries = (scoreboard[scoreboardDifficulty] || []).slice().sort(scoreSort);
-        scoreboardList.innerHTML = "";
-
-        if (!entries.length) {
-          const empty = document.createElement("div");
-          empty.className = "scoreboard-empty";
-          empty.textContent = "Noch keine Runs gespeichert. Hol dir den ersten Platz.";
-          scoreboardList.appendChild(empty);
-          return;
-        }
-
-        entries.forEach(function (entry, index) {
-          const item = document.createElement("li");
-          item.className = "scoreboard-item";
-          item.innerHTML = ""
-            + "<div class=\"scoreboard-rank\">" + String(index + 1).padStart(2, "0") + "</div>"
-            + "<div class=\"scoreboard-main\">"
-            + "<div class=\"scoreboard-name\">" + entry.name + "</div>"
-            + "<div class=\"scoreboard-meta\">" + formatDuration(entry.durationMs) + " // " + formatDate(entry.createdAt) + "</div>"
-            + "</div>"
-            + "<div class=\"scoreboard-points\">" + entry.score + " pts</div>";
-          scoreboardList.appendChild(item);
-        });
-      }
-
-      function render(currentState) {
-        for (const cell of cells) cell.className = "cell";
-
-        const difficultyLocked = currentState.started && !currentState.gameOver;
-        difficultySelect.disabled = difficultyLocked;
-        difficultySelect.title = difficultyLocked
-          ? "Die Schwierigkeit kann nach dem Spielende fuer den naechsten Versuch geaendert werden."
-          : "Schwierigkeit fuer den naechsten Versuch waehlen.";
-
-        if (currentState.food) {
-          cells[cellIndex(currentState.food.x, currentState.food.y)].classList.add("food");
-        }
-
-        currentState.snake.forEach(function (part, index) {
-          const cell = cells[cellIndex(part.x, part.y)];
-          cell.classList.add("snake");
-          if (index === 0) {
-            cell.classList.add("snake-head", "head-" + (currentState.started ? currentState.dir : currentState.nextDir));
-          }
-        });
-
-        scoreEl.textContent = String(currentState.score);
-
-        if (!currentState.started) {
-          statusEl.textContent = "Bereit. Druecke Start oder gib eine Richtung ein.";
-        } else if (currentState.gameOver) {
-          statusEl.textContent = currentState.food === null
-            ? "Perfekte Runde. Kein freies Feld mehr. Trag deinen Run in die Bestenliste ein."
-            : "Crash. Wenn du drin bist, wartet jetzt die Bestenliste.";
-        } else if (currentState.paused) {
-          statusEl.textContent = "Pausiert.";
-        } else {
-          statusEl.textContent = "Lauft. Halte den Kopf sauber an der Innenlinie.";
-        }
-
-        pauseBtn.textContent = currentState.paused ? "Weiter" : "Pause";
-        updateIntroVisibility();
-      }
-
-      function stopAllMusic() {
-        musicAudio.pause();
-        musicAudio.currentTime = 0;
-      }
-
-      function availableTracksForDifficulty(difficulty, excludeFile) {
-        let tracks = TRACKS[difficulty].filter(function (track) {
-          return !failedTracks[difficulty].has(track.file);
-        });
-        if (excludeFile && tracks.length > 1) {
-          tracks = tracks.filter(function (track) {
-            return track.file !== excludeFile;
-          });
-        }
-        return tracks;
-      }
-
-      function chooseRandomTrack(difficulty, excludeFile) {
-        const tracks = availableTracksForDifficulty(difficulty, excludeFile);
-        if (!tracks.length) return null;
-        return tracks[Math.floor(Math.random() * tracks.length)];
-      }
-
-      function loadTrack(track) {
-        currentTrack = track;
-        if (!track) {
-          musicAvailable = false;
-          stopAllMusic();
-          updateMusicUi();
-          return;
-        }
-
-        musicAvailable = true;
-        musicAudio.src = track.file;
-        musicAudio.load();
-        updateMusicUi();
-      }
-
-      function prepareRandomTrack(forceDifferent) {
-        const previousFile = forceDifferent && currentTrack ? currentTrack.file : null;
-        const nextTrack = chooseRandomTrack(currentDifficulty, previousFile);
-        loadTrack(nextTrack);
-      }
-
-      function unlockAudioIfNeeded() {
-        if (audioUnlocked) return;
-        audioUnlocked = true;
-        if (!currentTrack) {
-          prepareRandomTrack(false);
-        } else if (musicEnabled) {
-          musicAudio.play().catch(function () {});
-        }
-      }
-
-      function sanitizeNameInput() {
-        nameEntryInput.value = normalizeTag(nameEntryInput.value);
-        const ready = nameEntryInput.value.length >= 1;
-        saveNameEntryBtn.disabled = !ready;
-        nameEntryHint.textContent = ready
-          ? "Bereit zum Speichern."
-          : "Mindestens 1 Zeichen. Aktuell: " + nameEntryInput.value.length + "/5";
-      }
-
-      function openScoreboardPanel(difficulty) {
-        if (difficulty) {
-          scoreboardDifficulty = difficulty;
-        }
-        pauseForOverlayIfNeeded();
-        renderScoreboard();
-        scoreboardPanel.hidden = false;
-        updateBackdrop();
-      }
-
-      function closeScoreboardPanel() {
-        scoreboardPanel.hidden = true;
-        updateBackdrop();
-        updatePanelsResumeState();
-      }
-
-      function openSettings() {
-        pauseForOverlayIfNeeded();
-        settingsPanel.hidden = false;
-      }
-
-      function closeSettings() {
-        if (settingsPanel.hidden) return;
-        settingsPanel.hidden = true;
-        updatePanelsResumeState();
-      }
-
-      function openNameEntry(entry) {
-        pendingScoreEntry = entry;
-        const lastTag = normalizeTag(window.localStorage.getItem(LAST_TAG_KEY) || "VIPER");
-        nameEntryInput.value = lastTag.slice(0, 5);
-        nameEntryCopy.textContent = "Neuer Top Run auf " + difficultyLabel(entry.difficulty) + ". Score " + entry.score + " // Zeit " + formatDuration(entry.durationMs);
-        nameEntryModal.hidden = false;
-        updateBackdrop();
-        sanitizeNameInput();
-        nameEntryInput.focus();
-        nameEntryInput.select();
-      }
-
-      function closeNameEntry(saveEntry) {
-        if (saveEntry && pendingScoreEntry) {
-          const name = normalizeTag(nameEntryInput.value);
-          if (name.length >= 1) {
-            const entry = {
-              name,
-              score: pendingScoreEntry.score,
-              durationMs: pendingScoreEntry.durationMs,
-              createdAt: new Date().toISOString(),
-            };
-            scoreboard = insertScore(scoreboard, pendingScoreEntry.difficulty, entry);
-            saveScoreboard(scoreboard);
-            window.localStorage.setItem(LAST_TAG_KEY, name);
-            scoreboardDifficulty = pendingScoreEntry.difficulty;
-          }
-        }
-
-        pendingScoreEntry = null;
-        nameEntryModal.hidden = true;
-        updateBackdrop();
-        if (saveEntry) {
-          openScoreboardPanel(scoreboardDifficulty);
-        } else {
-          updatePanelsResumeState();
-        }
-      }
-
-      function markRunStarted() {
-        if (runStartedAt === null) {
-          runStartedAt = Date.now();
-        }
-      }
-
-      function resetRunState(startImmediately) {
-        runStartedAt = startImmediately ? Date.now() : null;
-        runFinishedHandled = false;
-      }
-
-      function handleRunFinished() {
-        if (runFinishedHandled) return;
-        runFinishedHandled = true;
-
-        const durationMs = runStartedAt === null ? 0 : Date.now() - runStartedAt;
-        const scoreEntry = {
-          difficulty: currentDifficulty,
-          score: state.score,
-          durationMs,
-        };
-
-        if (qualifiesForScoreboard(scoreboard, currentDifficulty, scoreEntry)) {
-          openNameEntry(scoreEntry);
-        }
-      }
-
-      function startGame() {
-        unlockAudioIfNeeded();
-        if (state.started) return;
-        state = { ...state, started: true, paused: false };
-        markRunStarted();
-        render(state);
-      }
-
-      function restartGame() {
-        unlockAudioIfNeeded();
-        state = { ...createInitialState(Math.random), started: true };
-        resetRunState(true);
-        render(state);
-      }
-
-      function startLoop() {
-        if (timerId !== null) clearInterval(timerId);
-        const tickMs = DIFFICULTY_TICKS[currentDifficulty] || DIFFICULTY_TICKS.medium;
-        timerId = setInterval(function () {
-          const wasGameOver = state.gameOver;
-          state = step(state, Math.random);
-          if (!wasGameOver && state.gameOver) {
-            handleRunFinished();
-          }
-          render(state);
-        }, tickMs);
-      }
-
-      function handleDirectionInput(dir) {
-        if (state.gameOver) return;
-        unlockAudioIfNeeded();
-        if (!state.started) {
-          state = { ...state, started: true, paused: false };
-          markRunStarted();
-        }
-        state = setNextDirection(state, dir);
-        render(state);
-      }
-
-      musicAudio.addEventListener("error", function () {
-        if (currentTrack) {
-          failedTracks[currentDifficulty].add(currentTrack.file);
-        }
-        const replacement = chooseRandomTrack(currentDifficulty, currentTrack ? currentTrack.file : null);
-        if (replacement) {
-          loadTrack(replacement);
-        } else {
-          loadTrack(null);
-        }
-      });
-
-      musicAudio.addEventListener("canplay", function () {
-        musicAvailable = true;
-        updateMusicUi();
-        if (musicEnabled && audioUnlocked) {
-          musicAudio.play().catch(function () {});
-        }
-      });
-
-      musicAudio.addEventListener("ended", function () {
-        prepareRandomTrack(true);
-      });
-
-      document.addEventListener("keydown", function (event) {
-        const keyName = event.key.toLowerCase();
-
-        if (!nameEntryModal.hidden) {
-          if (keyName === "escape") {
-            closeNameEntry(false);
-          } else if (keyName === "enter" && !saveNameEntryBtn.disabled) {
-            closeNameEntry(true);
-          }
-          return;
-        }
-
-        if (!scoreboardPanel.hidden || !settingsPanel.hidden) {
-          if (keyName === "escape") {
-            closeScoreboardPanel();
-            closeSettings();
-          }
-          return;
-        }
-
-        if (keyName === "arrowup" || keyName === "w") {
-          event.preventDefault();
-          handleDirectionInput("up");
-        } else if (keyName === "arrowdown" || keyName === "s") {
-          event.preventDefault();
-          handleDirectionInput("down");
-        } else if (keyName === "arrowleft" || keyName === "a") {
-          event.preventDefault();
-          handleDirectionInput("left");
-        } else if (keyName === "arrowright" || keyName === "d") {
-          event.preventDefault();
-          handleDirectionInput("right");
-        } else if (keyName === " ") {
-          event.preventDefault();
-          unlockAudioIfNeeded();
-          if (!state.started) {
-            startGame();
-          } else if (!state.gameOver) {
-            state = { ...state, paused: !state.paused };
-            render(state);
-          }
-        } else if (keyName === "r") {
-          restartGame();
-        } else if (keyName === "escape") {
-          openSettings();
-        }
-      });
-
-      document.querySelectorAll("[data-dir]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handleDirectionInput(btn.getAttribute("data-dir"));
-        });
-      });
-
-      startBtn.addEventListener("click", function () {
-        startGame();
-      });
-
-      scoreboardBtn.addEventListener("click", function () {
-        openScoreboardPanel(currentDifficulty);
-      });
-
-      quickScoresBtn.addEventListener("click", function () {
-        openScoreboardPanel(currentDifficulty);
-      });
-
-      introScoreboardBtn.addEventListener("click", function () {
-        openScoreboardPanel(currentDifficulty);
-      });
-
-      settingsBtn.addEventListener("click", function () {
-        openSettings();
-      });
-
-      introSettingsBtn.addEventListener("click", function () {
-        openSettings();
-      });
-
-      closeSettingsBtn.addEventListener("click", function () {
-        closeSettings();
-      });
-
-      closeScoreboardBtn.addEventListener("click", function () {
-        closeScoreboardPanel();
-      });
-
-      pauseBtn.addEventListener("click", function () {
-        unlockAudioIfNeeded();
-        if (!state.started) {
-          startGame();
-        } else if (!state.gameOver) {
-          state = { ...state, paused: !state.paused };
-          render(state);
-        }
-      });
-
-      restartBtn.addEventListener("click", function () {
-        restartGame();
-      });
-
-      difficultySelect.addEventListener("change", function () {
-        if (state.started && !state.gameOver) {
-          this.value = currentDifficulty;
-          return;
-        }
-        if (!DIFFICULTY_TICKS[this.value]) {
-          this.value = currentDifficulty;
-          return;
-        }
-        currentDifficulty = this.value;
-        scoreboardDifficulty = this.value;
-        startLoop();
-        prepareRandomTrack(true);
-        renderScoreboard();
-      });
-
-      musicToggleBtn.addEventListener("click", function () {
-        unlockAudioIfNeeded();
-        if (!musicAvailable) return;
-        musicEnabled = !musicEnabled;
-        updateMusicUi();
-        if (!musicEnabled) {
-          stopAllMusic();
-        } else if (currentTrack) {
-          musicAudio.play().catch(function () {});
-        } else {
-          prepareRandomTrack(false);
-        }
-      });
-
-      volumeRange.addEventListener("input", function () {
-        const volume = Math.max(0, Math.min(1, Number(this.value) / 100));
-        musicAudio.volume = volume;
-      });
-
-      colorblindToggle.addEventListener("change", function () {
-        settings.colorblindMode = this.checked;
-        applyTheme();
-      });
-
-      scoreboardTabs.forEach(function (button) {
-        button.addEventListener("click", function () {
-          scoreboardDifficulty = button.getAttribute("data-board-difficulty");
-          renderScoreboard();
-        });
-      });
-
-      nameEntryInput.addEventListener("input", sanitizeNameInput);
-
-      cancelNameEntryBtn.addEventListener("click", function () {
-        closeNameEntry(false);
-      });
-
-      saveNameEntryBtn.addEventListener("click", function () {
-        if (saveNameEntryBtn.disabled) return;
-        closeNameEntry(true);
-      });
-
-      modalBackdrop.addEventListener("click", function () {
-        if (!nameEntryModal.hidden) return;
-        closeScoreboardPanel();
-      });
-
-      window.addEventListener("click", function (event) {
-        if (settingsPanel.hidden) return;
-        if (settingsPanel.contains(event.target) || settingsBtn.contains(event.target) || introSettingsBtn.contains(event.target)) {
-          return;
-        }
-        closeSettings();
-      });
-
-      window.addEventListener("beforeunload", function () {
-        if (timerId !== null) clearInterval(timerId);
-        stopAllMusic();
-      });
-
-      applyTheme();
-      resetRunState(false);
-      startLoop();
-      updateMusicUi();
-      prepareRandomTrack(false);
-      renderScoreboard();
-      render(state);
-    })();
-  </script>
+  <script src="game.js"></script>
 </body>
 </html>
